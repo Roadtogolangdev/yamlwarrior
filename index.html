@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAML WARRIOR — DevOps Тренажёр</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#0c0c0c;--surface:#111;--surface2:#1a1a1a;--border:#2a2a2a;
+    --green:#00ff41;--gdim:#00cc33;--amber:#ffb000;--red:#ff3333;--blue:#00aaff;
+    --text:#ccc;--dim:#555;
+  }
+  body{background:var(--bg);color:var(--green);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.015) 2px,rgba(0,255,65,.015) 4px);}
+  body::after{content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.03) 0,rgba(0,0,0,.03) 1px,transparent 1px,transparent 2px);
+    pointer-events:none;z-index:9999;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  @keyframes flicker{0%,100%{opacity:1}93%{opacity:.85}94%{opacity:1}97%{opacity:.92}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  @keyframes typing{from{width:0}to{width:100%}}
+  @keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  body{animation:flicker 10s infinite;}
+  .wrap{max-width:860px;margin:0 auto;}
+
+  /* HEADER */
+  .hdr{border:1px solid var(--green);padding:18px 24px;margin-bottom:20px;background:rgba(0,255,65,.03);}
+  .hdr-title{font-size:26px;font-weight:700;letter-spacing:6px;text-shadow:0 0 20px rgba(0,255,65,.5);}
+  .cursor{display:inline-block;width:10px;height:20px;background:var(--green);margin-left:4px;animation:blink 1s step-end infinite;vertical-align:middle;}
+  .hdr-sub{font-size:11px;color:var(--dim);margin-top:5px;letter-spacing:2px;}
+  .hdr-sub span{color:var(--amber);}
+
+  /* SCREENS */
+  .screen{display:none;animation:slidein .2s ease;}.screen.active{display:block;}
+
+  /* PASSWORD SCREEN */
+  .pw-ascii{font-size:9px;color:var(--gdim);white-space:pre;line-height:1.2;margin-bottom:18px;overflow-x:auto;}
+  .pw-info{border:1px solid var(--border);padding:18px;margin-bottom:18px;font-size:12px;color:var(--text);line-height:1.9;}
+  .pw-info .lbl{color:var(--gdim);}.pw-info .val{color:var(--green);}
+  .field-wrap{border:1px solid var(--border);display:flex;align-items:center;margin-bottom:12px;background:#050505;}
+  .field-label{padding:11px 14px;color:var(--gdim);font-size:12px;white-space:nowrap;border-right:1px solid var(--border);}
+  .field-input{flex:1;background:transparent;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--green);padding:11px 14px;caret-color:var(--green);}
+  .field-input::placeholder{color:var(--dim);}
+  .field-toggle{padding:11px 14px;cursor:pointer;color:var(--dim);font-size:11px;border:none;background:transparent;font-family:inherit;border-left:1px solid var(--border);}
+  .field-toggle:hover{color:var(--green);}
+  .pw-error{color:var(--red);font-size:12px;margin-bottom:12px;padding:8px 12px;border:1px solid var(--red);background:rgba(255,51,51,.05);display:none;}
+  .pw-error.show{display:block;}
+  .pw-note{font-size:11px;color:var(--dim);margin-bottom:16px;line-height:1.6;}
+  .pw-note span{color:var(--amber);}
+  .pw-attempts{font-size:11px;color:var(--red);margin-top:8px;display:none;}
+  .pw-attempts.show{display:block;}
+
+  /* TOPIC SELECT */
+  .ts-title{font-size:12px;color:var(--dim);margin-bottom:14px;letter-spacing:1px;}
+  .ts-title span{color:var(--green);}
+  .topics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+  @media(max-width:500px){.topics{grid-template-columns:1fr;}}
+  .topic-card{border:1px solid var(--border);padding:18px;cursor:pointer;transition:all .2s;background:transparent;position:relative;overflow:hidden;text-align:left;width:100%;}
+  .topic-card:hover{border-color:var(--gdim);background:rgba(0,255,65,.03);}
+  .topic-card.selected{border-color:var(--green);background:rgba(0,255,65,.06);}
+  .topic-card.selected::before{content:'✓';position:absolute;top:10px;right:12px;color:var(--green);font-size:14px;font-weight:700;}
+  .tc-icon{font-size:20px;margin-bottom:8px;}
+  .tc-name{font-size:14px;font-weight:700;color:var(--green);margin-bottom:3px;letter-spacing:2px;}
+  .tc-desc{font-size:11px;color:var(--dim);line-height:1.5;}
+
+  /* QUESTION COUNT SLIDER */
+  .qcount-section{border:1px solid var(--border);padding:16px;margin-bottom:20px;}
+  .qcount-label{font-size:11px;color:var(--dim);letter-spacing:1px;margin-bottom:12px;}
+  .qcount-label span{color:var(--green);}
+  .qcount-btns{display:flex;gap:8px;flex-wrap:wrap;}
+  .qcount-btn{padding:8px 20px;font-family:inherit;font-size:12px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s;letter-spacing:1px;}
+  .qcount-btn:hover{border-color:var(--gdim);color:var(--green);}
+  .qcount-btn.active{border-color:var(--green);background:rgba(0,255,65,.08);color:var(--green);font-weight:700;}
+  .qcount-hint{font-size:10px;color:var(--dim);margin-top:10px;}
+  .qcount-hint span{color:var(--amber);}
+
+  .ts-err{color:var(--red);font-size:12px;margin-bottom:12px;display:none;}
+  .ts-err.show{display:block;}
+
+  /* LOADING - TERMINAL */
+  .terminal{border:1px solid var(--green);padding:24px;background:#050505;min-height:300px;font-size:13px;line-height:1.8;}
+  .terminal-header{color:var(--gdim);margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:10px;font-size:11px;letter-spacing:2px;}
+  .t-line{color:var(--green);margin-bottom:4px;white-space:pre-wrap;}
+  .t-line.dim{color:var(--dim);}
+  .t-line.ok{color:var(--gdim);}
+  .t-line.err{color:var(--red);}
+  .t-line.warn{color:var(--amber);}
+  .t-line.info{color:var(--blue);}
+  .t-progress{margin:8px 0 12px;}
+  .t-bar-wrap{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);}
+  .t-bar{flex:1;height:6px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
+  .t-bar-fill{height:100%;background:linear-gradient(90deg,var(--gdim),var(--green));transition:width .4s;box-shadow:0 0 8px rgba(0,255,65,.4);}
+  .t-bar-pct{color:var(--green);min-width:36px;text-align:right;font-size:11px;}
+  .t-cursor{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;}
+
+  /* PROGRESS */
+  .pbar{border:1px solid var(--border);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--dim);}
+  .plabel{color:var(--gdim);min-width:76px;}
+  .ptrack{flex:1;height:5px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
+  .pfill{height:100%;background:linear-gradient(90deg,var(--gdim),var(--green));transition:width .4s;box-shadow:0 0 8px rgba(0,255,65,.4);}
+  .pcount{color:var(--green);min-width:52px;text-align:right;}
+
+  /* SCORE ROW */
+  .srow{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .sbadge{border:1px solid var(--border);padding:7px 11px;font-size:10px;color:var(--dim);flex:1;min-width:80px;}
+  .sbadge .v{font-size:16px;font-weight:700;color:var(--green);display:block;margin-top:2px;}
+
+  /* BLOCK TABS */
+  .btabs{display:flex;gap:3px;margin-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .btab{padding:6px 13px;font-size:10px;font-family:inherit;cursor:default;border:1px solid transparent;background:transparent;color:var(--dim);letter-spacing:1px;position:relative;bottom:-1px;}
+  .btab.active{color:var(--green);border:1px solid var(--border);border-bottom-color:var(--bg);background:var(--bg);}
+  .btab.done{color:var(--gdim);}
+  .btab.done::after{content:' ✓';color:var(--green);}
+
+  /* QUESTION CARD */
+  .qcard{border:1px solid var(--border);padding:20px;margin-bottom:12px;background:rgba(0,255,65,.02);min-height:200px;}
+  .qmeta{display:flex;justify-content:space-between;margin-bottom:11px;font-size:10px;color:var(--dim);flex-wrap:wrap;gap:5px;align-items:center;}
+  .qbadge{padding:2px 7px;border:1px solid currentColor;font-size:9px;letter-spacing:1px;}
+  .bmc{color:var(--blue);}.bbug{color:var(--amber);}.bcmd{color:var(--green);}
+  .qnum{color:var(--gdim);}
+  .qtag{padding:2px 7px;background:rgba(0,255,65,.08);color:var(--green);font-size:9px;border:1px solid var(--gdim);}
+  .qtext{font-size:13px;color:#ddd;margin-bottom:15px;line-height:1.7;white-space:pre-wrap;}
+  .code{background:#050505;border:1px solid var(--border);border-left:3px solid var(--amber);padding:12px 14px;margin:0 0 14px;font-size:11px;color:var(--amber);white-space:pre;overflow-x:auto;line-height:1.5;font-family:'JetBrains Mono',monospace;}
+  .code.gc{border-left-color:var(--green);color:var(--gdim);}
+  .opts{display:flex;flex-direction:column;gap:6px;}
+  .opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);cursor:pointer;transition:all .15s;background:transparent;color:var(--text);font-family:inherit;font-size:12px;text-align:left;line-height:1.4;width:100%;}
+  .opt:hover:not(:disabled){border-color:var(--gdim);background:rgba(0,255,65,.04);color:var(--green);}
+  .opt:disabled{cursor:default;}
+  .opt.correct{border-color:var(--green);background:rgba(0,255,65,.08);color:var(--green);}
+  .opt.wrong{border-color:var(--red);background:rgba(255,51,51,.06);color:var(--red);}
+  .oletter{color:var(--gdim);min-width:18px;font-weight:700;font-size:10px;margin-top:1px;}
+  .cmdinput{display:flex;align-items:center;border:1px solid var(--border);background:#050505;padding:10px 14px;gap:8px;margin-top:6px;}
+  .cmdprompt{color:var(--green);font-size:13px;white-space:nowrap;}
+  .cmdfld{flex:1;background:transparent;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--green);caret-color:var(--green);}
+  .cmdfld::placeholder{color:var(--dim);}
+  .hint{font-size:10px;color:var(--dim);margin-top:6px;}
+  .hint b{color:var(--amber);}
+  .fb{margin-top:12px;padding:10px 14px;border-left:3px solid;font-size:12px;line-height:1.6;display:none;white-space:pre-wrap;}
+  .fb.show{display:block;}
+  .fb.ok{border-color:var(--green);color:var(--green);background:rgba(0,255,65,.05);}
+  .fb.no{border-color:var(--red);color:#ff8888;background:rgba(255,51,51,.05);}
+  .btnrow{display:flex;gap:10px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;}
+  .btn{padding:9px 20px;font-family:inherit;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all .15s;border:1px solid;}
+  .btn-p{background:var(--green);color:var(--bg);border-color:var(--green);font-weight:700;}
+  .btn-p:hover{background:#00dd38;box-shadow:0 0 14px rgba(0,255,65,.3);}
+  .btn-s{background:transparent;color:var(--gdim);border-color:var(--border);}
+  .btn-s:hover{border-color:var(--gdim);color:var(--green);}
+  .btn:disabled{opacity:.35;cursor:default;}
+
+  /* RESULTS */
+  .res-top{border:1px solid var(--green);padding:26px;text-align:center;background:rgba(0,255,65,.03);margin-bottom:14px;}
+  .res-ascii{font-size:10px;color:var(--gdim);white-space:pre;line-height:1.3;margin-bottom:18px;}
+  .res-score{font-size:50px;font-weight:700;text-shadow:0 0 30px rgba(0,255,65,.5);margin-bottom:6px;}
+  .res-label{font-size:11px;color:var(--dim);letter-spacing:3px;margin-bottom:18px;}
+  .res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;text-align:left;}
+  @media(max-width:500px){.res-grid{grid-template-columns:1fr;}}
+  .rg-item{border:1px solid var(--border);padding:10px;font-size:10px;color:var(--dim);}
+  .rg-item .rv{font-size:19px;font-weight:700;color:var(--green);display:block;margin-top:3px;}
+  .res-verdict{font-size:12px;color:var(--amber);letter-spacing:1px;}
+
+  /* WEAK */
+  .section{border:1px solid var(--border);padding:18px;margin-bottom:14px;}
+  .sec-title{font-size:10px;color:var(--dim);letter-spacing:2px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;}
+  .sec-title span{color:var(--amber);}
+  .weak-list{display:flex;flex-direction:column;gap:7px;}
+  .weak-item{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;border:1px solid var(--border);font-size:11px;}
+  .wi-topic{color:var(--green);min-width:100px;}
+  .wi-bar{flex:1;height:4px;background:var(--surface2);margin:0 11px;overflow:hidden;}
+  .wi-fill{height:100%;transition:width .5s;}
+  .wi-fill.good{background:var(--gdim);}
+  .wi-fill.warn{background:var(--amber);}
+  .wi-fill.bad{background:var(--red);}
+  .wi-score{color:var(--amber);font-size:10px;min-width:80px;text-align:right;}
+  .wi-score.good{color:var(--green);}
+
+  /* PROMPT */
+  .prompt-section{border:1px solid var(--amber);padding:18px;margin-bottom:14px;background:rgba(255,176,0,.02);}
+  .ps-title{font-size:10px;color:var(--amber);letter-spacing:2px;margin-bottom:10px;}
+  .ps-desc{font-size:11px;color:var(--dim);margin-bottom:12px;line-height:1.6;}
+  .prompt-toggle{display:flex;gap:8px;margin-bottom:14px;}
+  .ptoggle-btn{padding:6px 16px;font-family:inherit;font-size:11px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s;letter-spacing:1px;}
+  .ptoggle-btn:hover{border-color:var(--gdim);color:var(--green);}
+  .ptoggle-btn.active{border-color:var(--amber);background:rgba(255,176,0,.08);color:var(--amber);}
+  .prompt-box{background:#050505;border:1px solid var(--border);border-left:3px solid var(--amber);padding:14px;font-size:11px;color:#ddd;line-height:1.7;white-space:pre-wrap;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:'JetBrains Mono',monospace;}
+  .copy-row{display:flex;gap:10px;align-items:center;}
+  .copy-ok{font-size:11px;color:var(--green);display:none;}
+  .copy-ok.show{display:inline;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="hdr-title">YAML WARRIOR<span class="cursor"></span></div>
+    <div class="hdr-sub">DevOps Тренажёр // <span>AI-powered · Linux · Docker · Kubernetes · Go</span> // v4.0</div>
+    <div class="hdr-sub" style="margin-top:3px;">by <span>Верещака Артем</span> · <span>@artgodev</span></div>
+  </div>
+
+  <!-- SCREEN 0: PASSWORD -->
+  <div class="screen active" id="s-password">
+    <div class="pw-ascii">
+ ██╗   ██╗ █████╗ ███╗   ███╗██╗
+ ╚██╗ ██╔╝██╔══██╗████╗ ████║██║
+  ╚████╔╝ ███████║██╔████╔██║██║
+   ╚██╔╝  ██╔══██║██║╚██╔╝██║██║
+    ██║   ██║  ██║██║ ╚═╝ ██║███████╗
+    ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝
+██╗    ██╗ █████╗ ██████╗ ██████╗ ██╗ ██████╗ ██████╗
+██║    ██║██╔══██╗██╔══██╗██╔══██╗██║██╔═══██╗██╔══██╗
+██║ █╗ ██║███████║██████╔╝██████╔╝██║██║   ██║██████╔╝
+██║███╗██║██╔══██║██╔══██╗██╔══██╗██║██║   ██║██╔══██╗
+╚███╔███╔╝██║  ██║██║  ██║██║  ██║██║╚██████╔╝██║  ██║
+ ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝  ╚═╝</div>
+    <div class="pw-info">
+      <div>$ ./yamlwarrior --auth</div><br>
+      <div><span class="lbl">СИСТЕМА   </span> → <span class="val">AI-генерация вопросов</span> через Claude API</div>
+      <div><span class="lbl">ТЕМЫ      </span> → Linux · Docker · Kubernetes · Go</div>
+      <div><span class="lbl">ДОСТУП    </span> → По паролю</div>
+      <br><div>$ _</div>
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">ПАРОЛЬ</span>
+      <input class="field-input" id="pw-input" type="password" placeholder="введи пароль..." autocomplete="off">
+      <button class="field-toggle" onclick="togglePwVis()">SHOW</button>
+    </div>
+    <div class="pw-error" id="pw-error">⚠ Неверный пароль</div>
+    <div class="pw-attempts" id="pw-attempts"></div>
+    <div class="pw-note">
+      <span>ДОСТУП ЗАКРЫТ.</span> Для получения пароля обратись к администратору: <span>@artgodev</span>
+    </div>
+    <div class="btnrow" style="justify-content:flex-start">
+      <button class="btn btn-p" onclick="checkPassword()">ВОЙТИ →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: TOPIC SELECT -->
+  <div class="screen" id="s-topics">
+    <div class="ts-title">$ SELECT TOPICS <span>// выбери темы для тренировки</span></div>
+    <div class="topics">
+      <button class="topic-card" id="tc-LINUX" onclick="toggleTopic('LINUX')">
+        <div class="tc-icon">🐧</div>
+        <div class="tc-name">LINUX</div>
+        <div class="tc-desc">Процессы, файловая система, права, сеть, bash скрипты</div>
+      </button>
+      <button class="topic-card" id="tc-DOCKER" onclick="toggleTopic('DOCKER')">
+        <div class="tc-icon">🐳</div>
+        <div class="tc-name">DOCKER</div>
+        <div class="tc-desc">Контейнеры, образы, Dockerfile, сеть, volumes, compose</div>
+      </button>
+      <button class="topic-card" id="tc-KUBERNETES" onclick="toggleTopic('KUBERNETES')">
+        <div class="tc-icon">☸️</div>
+        <div class="tc-name">KUBERNETES</div>
+        <div class="tc-desc">Pods, Deployments, Services, probes, RBAC, kubectl</div>
+      </button>
+      <button class="topic-card" id="tc-GO" onclick="toggleTopic('GO')">
+        <div class="tc-icon">🦫</div>
+        <div class="tc-name">GO</div>
+        <div class="tc-desc">Горутины, каналы, интерфейсы, error handling, паттерны</div>
+      </button>
+    </div>
+
+    <div class="qcount-section">
+      <div class="qcount-label">$ КОЛИЧЕСТВО ВОПРОСОВ <span id="qcount-display">// 10 на тему</span></div>
+      <div class="qcount-btns">
+        <button class="qcount-btn" onclick="setQCount(5)">5</button>
+        <button class="qcount-btn active" onclick="setQCount(10)">10</button>
+        <button class="qcount-btn" onclick="setQCount(15)">15</button>
+        <button class="qcount-btn" onclick="setQCount(20)">20</button>
+      </div>
+      <div class="qcount-hint">
+        <span>~$</span><span id="cost-hint">0.02</span> за генерацию при выборе всех тем
+      </div>
+    </div>
+
+    <div class="ts-err" id="ts-err">⚠ Выбери хотя бы одну тему</div>
+    <div class="btnrow" style="justify-content:space-between">
+      <button class="btn btn-s" onclick="goScreen('s-password')">← ГЛАВНАЯ</button>
+      <button class="btn btn-p" onclick="startTest()">НАЧАТЬ ТЕСТ →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: LOADING TERMINAL -->
+  <div class="screen" id="s-loading">
+    <div class="terminal">
+      <div class="terminal-header">YAML WARRIOR // GENERATION ENGINE // v4.0</div>
+      <div id="terminal-output"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: TEST -->
+  <div class="screen" id="s-test">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:10px;color:var(--dim);letter-spacing:1px;">YAML WARRIOR // TEST MODE</span>
+      <button class="btn btn-s" style="padding:5px 14px;font-size:10px;" onclick="stopTest()">■ СТОП</button>
+    </div>
+    <div class="pbar">
+      <span class="plabel">ПРОГРЕСС</span>
+      <div class="ptrack"><div class="pfill" id="pfill" style="width:0%"></div></div>
+      <span class="pcount" id="pcount">0 / 0</span>
+    </div>
+    <div class="srow">
+      <div class="sbadge">ВЕРНО<span class="v" id="sc-ok">0</span></div>
+      <div class="sbadge">НЕВЕРНО<span class="v" id="sc-no" style="color:var(--red)">0</span></div>
+      <div class="sbadge">ТОЧНОСТЬ<span class="v" id="sc-acc">—</span></div>
+      <div class="sbadge">ТЕМА<span class="v" id="sc-topic" style="color:var(--amber)">—</span></div>
+    </div>
+    <div class="btabs" id="btabs"></div>
+    <div class="qcard">
+      <div class="qmeta">
+        <div style="display:flex;gap:7px;align-items:center;">
+          <span id="qbadge" class="qbadge bmc">ВЫБОР ОТВЕТА</span>
+          <span id="qtag" class="qtag">—</span>
+        </div>
+        <span class="qnum" id="qnum">Вопрос 1</span>
+      </div>
+      <div class="qtext" id="qtext"></div>
+      <div id="qcode" class="code" style="display:none"></div>
+      <div id="qopts" class="opts"></div>
+      <div id="qcmd" style="display:none">
+        <div class="cmdinput">
+          <span class="cmdprompt">$ </span>
+          <input class="cmdfld" id="cmdfld" placeholder="введите команду..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="hint" id="qhint"></div>
+      </div>
+      <div class="fb" id="fb"></div>
+      <div class="btnrow">
+        <button class="btn btn-s" id="btn-check" onclick="checkCmd()" style="display:none">ПРОВЕРИТЬ</button>
+        <button class="btn btn-p" id="btn-next" onclick="nextQ()" disabled>ДАЛЕЕ →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: RESULTS -->
+  <div class="screen" id="s-results">
+    <div class="res-top">
+      <div class="res-ascii">╔═══════════════════════════════════╗
+║      ТРЕНИРОВКА ЗАВЕРШЕНА         ║
+╚═══════════════════════════════════╝</div>
+      <div class="res-score" id="res-pct">0%</div>
+      <div class="res-label">ИТОГОВЫЙ РЕЗУЛЬТАТ</div>
+      <div class="res-grid" id="res-grid"></div>
+      <div class="res-verdict" id="res-verdict"></div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">$ АНАЛИЗ ПРОБЕЛОВ <span>// результат по темам</span></div>
+      <div class="weak-list" id="weak-list"></div>
+    </div>
+
+    <div class="prompt-section">
+      <div class="ps-title">$ AI STUDY PROMPT // скопируй и вставь в ChatGPT или Claude</div>
+      <div class="ps-desc">Промпт сгенерирован на основе твоих результатов. Выбери какие вопросы включить:</div>
+      <div class="prompt-toggle">
+        <button class="ptoggle-btn active" id="pt-errors" onclick="setPromptMode('errors')">ТОЛЬКО ОШИБКИ</button>
+        <button class="ptoggle-btn" id="pt-all" onclick="setPromptMode('all')">ВСЕ ВОПРОСЫ</button>
+      </div>
+      <div class="prompt-box" id="prompt-box"></div>
+      <div class="copy-row">
+        <button class="btn btn-p" onclick="copyPrompt()">📋 СКОПИРОВАТЬ</button>
+        <span class="copy-ok" id="copy-ok">✓ Скопировано!</span>
+      </div>
+    </div>
+
+    <div class="btnrow" style="justify-content:center;gap:12px;">
+      <button class="btn btn-s" onclick="goScreen('s-topics')">← СМЕНИТЬ ТЕМЫ</button>
+      <button class="btn btn-p" onclick="startTest()">↺ НОВЫЙ ТЕСТ</button>
+    </div>
+  </div>
+
+</div>
+<script>
+
+const ENCODED_KEY = 'B9BPywv+IbJpTVjpTMkQujkUneCVdtmD9l67jGjKAQdiMQ/nz1v3vnIDaq3U8OmOeXX+l0z/Ws94iKTK8UhS';
+// Пароль проверяется через расшифровку ключа — если ключ расшифровался = пароль верный
+
+async function decodeKey(encryptedB64, password) {
+  try {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const salt = enc.encode('yamlwarrior_salt_v4');
+    const cryptoKey = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+    );
+    const combined = Uint8Array.from(atob(encryptedB64), c => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const data = combined.slice(12);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cryptoKey, data);
+    return new TextDecoder().decode(decrypted);
+  } catch(e) { return null; }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let selectedTopics = [];
+let questionsPerTopic = 10;
+let questions = [];
+let qIdx = 0;
+let answered = false;
+let totalCorrect = 0;
+let topicStats = {};
+let blockRanges = [];
+let wrongQuestions = [];
+let allAnsweredQuestions = [];
+let promptMode = 'errors';
+let pwAttempts = 0;
+const MAX_ATTEMPTS = 5;
+
+// ============================================================
+// PASSWORD
+// ============================================================
+function togglePwVis() {
+  const inp = document.getElementById('pw-input');
+  const btn = document.querySelector('.field-toggle');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'HIDE'; }
+  else { inp.type = 'password'; btn.textContent = 'SHOW'; }
+}
+
+async function checkPassword() {
+  const pw = document.getElementById('pw-input').value.trim();
+  const err = document.getElementById('pw-error');
+  const att = document.getElementById('pw-attempts');
+  const btn = document.querySelector('#s-password .btn-p');
+
+  if (!pw) { err.classList.add('show'); return; }
+
+  btn.textContent = 'ПРОВЕРЯЮ...';
+  btn.disabled = true;
+
+  // Пробуем расшифровать ключ с введённым паролем
+  const apiKey = await decodeKey(ENCODED_KEY, pw);
+
+  btn.textContent = 'ВОЙТИ →';
+  btn.disabled = false;
+
+  if (apiKey && apiKey.startsWith('sk-')) {
+    err.classList.remove('show');
+    att.classList.remove('show');
+    window._apiKey = apiKey; // сохраняем расшифрованный ключ в память
+    goScreen('s-topics');
+    return;
+  }
+
+  pwAttempts++;
+  err.classList.add('show');
+
+  if (pwAttempts >= MAX_ATTEMPTS) {
+    document.getElementById('pw-input').disabled = true;
+    btn.disabled = true;
+    att.textContent = '⚠ Слишком много попыток. Обновите страницу.';
+    att.classList.add('show');
+    return;
+  }
+
+  const left = MAX_ATTEMPTS - pwAttempts;
+  att.textContent = `Осталось попыток: ${left}`;
+  att.classList.add('show');
+  document.getElementById('pw-input').value = '';
+}
+
+// ============================================================
+// TOPIC SELECT
+// ============================================================
+function toggleTopic(t) {
+  const card = document.getElementById('tc-' + t);
+  const idx = selectedTopics.indexOf(t);
+  if (idx === -1) { selectedTopics.push(t); card.classList.add('selected'); }
+  else { selectedTopics.splice(idx, 1); card.classList.remove('selected'); }
+  updateCostHint();
+}
+
+function setQCount(n) {
+  questionsPerTopic = n;
+  document.querySelectorAll('.qcount-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('qcount-display').textContent = `// ${n} на тему`;
+  updateCostHint();
+}
+
+function updateCostHint() {
+  const total = selectedTopics.length * questionsPerTopic;
+  const cost = (total * 0.0002).toFixed(3);
+  document.getElementById('cost-hint').textContent = cost;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ============================================================
+// TERMINAL LOGGER
+// ============================================================
+let terminalEl;
+
+function termInit() {
+  terminalEl = document.getElementById('terminal-output');
+  terminalEl.innerHTML = '';
+}
+
+function termLog(text, cls = '') {
+  const line = document.createElement('div');
+  line.className = 't-line' + (cls ? ' ' + cls : '');
+  line.textContent = text;
+  terminalEl.appendChild(line);
+  terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+
+function termProgress(label, pct) {
+  const existing = document.getElementById('t-prog-' + label.replace(/\s/g,'_'));
+  if (existing) {
+    existing.querySelector('.t-bar-fill').style.width = pct + '%';
+    existing.querySelector('.t-bar-pct').textContent = pct + '%';
+    return;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 't-progress';
+  wrap.id = 't-prog-' + label.replace(/\s/g,'_');
+  wrap.innerHTML = `<div class="t-bar-wrap">
+    <span style="min-width:120px;color:var(--gdim);font-size:11px;">${label}</span>
+    <div class="t-bar"><div class="t-bar-fill" style="width:${pct}%"></div></div>
+    <span class="t-bar-pct">${pct}%</span>
+  </div>`;
+  terminalEl.appendChild(wrap);
+  terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+
+function termCursor() {
+  const existing = document.getElementById('t-active-cursor');
+  if (existing) existing.remove();
+  const line = document.createElement('div');
+  line.className = 't-line';
+  line.id = 't-active-cursor';
+  line.innerHTML = '&gt; <span class="t-cursor"></span>';
+  terminalEl.appendChild(line);
+  terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// GENERATE QUESTIONS
+// ============================================================
+const SYSTEM_PROMPT = `Ты генератор вопросов для DevOps/SRE тренажёра.
+Генерируй СТРОГО валидный JSON без markdown, без комментариев.
+Вопросы должны быть практическими для опытного инженера.`;
+
+function buildPrompt(topic, count) {
+  const mc = Math.ceil(count * 0.4);
+  const bug = Math.ceil(count * 0.35);
+  const cmd = count - mc - bug;
+  return `Сгенерируй ${count} вопросов по теме "${topic}" для DevOps/SRE инженера.
+Распределение: ${mc} типа mc (выбор ответа), ${bug} типа bug (найди ошибку в коде), ${cmd} типа cmd (напиши команду).
+
+Верни JSON (без markdown):
+{
+  "questions": [
+    {
+      "type": "mc",
+      "topic": "${topic}",
+      "text": "текст вопроса",
+      "options": ["A", "B", "C", "D"],
+      "answer": 0,
+      "explain": "объяснение"
+    },
+    {
+      "type": "bug",
+      "topic": "${topic}",
+      "text": "описание — найди ошибку",
+      "code": "код с ошибкой",
+      "options": ["A", "B", "C", "D"],
+      "answer": 1,
+      "explain": "объяснение ошибки и исправление"
+    },
+    {
+      "type": "cmd",
+      "topic": "${topic}",
+      "text": "описание задачи",
+      "hint": "подсказка",
+      "answer": ["команда1", "команда2"],
+      "explain": "объяснение команды"
+    }
+  ]
+}
+
+Требования:
+- Уровень: практикующий инженер, не джун
+- Код в bug должен содержать реальную типичную ошибку
+- Объяснения конкретные с примерами исправления
+- На русском языке`;
+}
+
+async function generateTopic(topic, count) {
+  const apiKey = window._apiKey;
+  const response = await fetch('https://api.proxyapi.ru/anthropic/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: buildPrompt(topic, count) }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data.content[0].text.trim();
+  const clean = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+
+  // Find JSON object in response
+  const start = clean.indexOf('{');
+  const end = clean.lastIndexOf('}');
+  const jsonStr = clean.substring(start, end + 1);
+
+  const parsed = JSON.parse(jsonStr);
+  return parsed.questions;
+}
+
+// ============================================================
+// START TEST
+// ============================================================
+async function startTest() {
+  if (selectedTopics.length === 0) {
+    document.getElementById('ts-err').classList.add('show');
+    return;
+  }
+  document.getElementById('ts-err').classList.remove('show');
+
+  goScreen('s-loading');
+  termInit();
+  await sleep(200);
+
+  termLog('> Инициализация YAML WARRIOR v4.0...', 'dim');
+  await sleep(300);
+  termLog('> Подключение к Claude API...', '');
+  await sleep(400);
+  termLog('> Соединение установлено ✓', 'ok');
+  await sleep(200);
+  termLog('');
+  termLog(`> Выбранные темы: ${selectedTopics.join(', ')}`, 'info');
+  termLog(`> Вопросов на тему: ${questionsPerTopic}`, 'info');
+  termLog(`> Всего вопросов: ${selectedTopics.length * questionsPerTopic}`, 'info');
+  termLog('');
+
+  const allQuestions = [];
+  let errors = [];
+
+  for (let i = 0; i < selectedTopics.length; i++) {
+    const topic = selectedTopics[i];
+    const pct = Math.round((i / selectedTopics.length) * 100);
+
+    termLog(`> Генерирую вопросы: ${topic}...`);
+    termProgress('Общий прогресс', pct);
+    termCursor();
+
+    try {
+      const qs = await generateTopic(topic, questionsPerTopic);
+      allQuestions.push(...qs);
+      termLog(`  ✓ ${topic}: ${qs.length} вопросов сгенерировано`, 'ok');
+    } catch(e) {
+      termLog(`  ✗ ${topic}: ошибка — ${e.message}`, 'err');
+      errors.push(topic);
+    }
+
+    termProgress('Общий прогресс', Math.round(((i+1) / selectedTopics.length) * 100));
+    await sleep(100);
+  }
+
+  // Remove cursor
+  const cursor = document.getElementById('t-active-cursor');
+  if (cursor) cursor.remove();
+
+  if (allQuestions.length === 0) {
+    termLog('');
+    termLog('> ОШИБКА: Не удалось сгенерировать вопросы', 'err');
+    termLog('> Проверь подключение и повтори попытку', 'warn');
+    setTimeout(() => goScreen('s-topics'), 3000);
+    return;
+  }
+
+  termProgress('Общий прогресс', 100);
+  termLog('');
+  termLog(`> Генерация завершена: ${allQuestions.length} вопросов`, 'ok');
+  if (errors.length > 0) termLog(`> Ошибки в темах: ${errors.join(', ')}`, 'warn');
+  termLog('> Запускаю тест...', 'ok');
+  await sleep(800);
+
+  // Setup test
+  questions = allQuestions;
+  qIdx = 0; answered = false; totalCorrect = 0;
+  wrongQuestions = []; allAnsweredQuestions = [];
+  topicStats = {};
+  selectedTopics.forEach(t => { topicStats[t] = {correct: 0, total: 0}; });
+  questions.forEach(q => { if (topicStats[q.topic]) topicStats[q.topic].total++; });
+
+  buildBlockRanges();
+  renderTabs();
+  resetScores();
+  goScreen('s-test');
+  renderQ();
+  updateProgress();
+}
+
+function buildBlockRanges() {
+  blockRanges = [];
+  const types = ['mc','bug','cmd'];
+  const names = {mc:'01 · ТЕСТ', bug:'02 · ОШИБКИ', cmd:'03 · КОМАНДЫ'};
+  types.forEach(type => {
+    const first = questions.findIndex(q => q.type === type);
+    if (first === -1) return;
+    const last = questions.map(q => q.type).lastIndexOf(type);
+    blockRanges.push({type, name: names[type], start: first, end: last});
+  });
+}
+
+function resetScores() {
+  document.getElementById('sc-ok').textContent = '0';
+  document.getElementById('sc-no').textContent = '0';
+  document.getElementById('sc-acc').textContent = '—';
+}
+
+// ============================================================
+// RENDER TABS
+// ============================================================
+function renderTabs() {
+  const el = document.getElementById('btabs');
+  el.innerHTML = '';
+  blockRanges.forEach((b, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btab' + (i === 0 ? ' active' : '');
+    btn.id = 'btab-' + i;
+    btn.textContent = b.name;
+    el.appendChild(btn);
+  });
+}
+
+function updateTabs() {
+  blockRanges.forEach((b, i) => {
+    const tab = document.getElementById('btab-' + i);
+    if (!tab) return;
+    tab.className = 'btab';
+    if (qIdx >= b.start && qIdx <= b.end) tab.classList.add('active');
+    else if (qIdx > b.end) tab.classList.add('done');
+  });
+}
+
+// ============================================================
+// RENDER QUESTION
+// ============================================================
+function renderQ() {
+  const q = questions[qIdx];
+  answered = false;
+
+  const badges = {mc:['ВЫБОР ОТВЕТА','bmc'], bug:['НАЙДИ ОШИБКУ','bbug'], cmd:['НАПИШИ КОМАНДУ','bcmd']};
+  const [btext, bcls] = badges[q.type] || ['ВОПРОС','bmc'];
+  document.getElementById('qbadge').textContent = btext;
+  document.getElementById('qbadge').className = 'qbadge ' + bcls;
+  document.getElementById('qtag').textContent = q.topic;
+  document.getElementById('qnum').textContent = `Вопрос ${qIdx+1} / ${questions.length}`;
+  document.getElementById('sc-topic').textContent = q.topic;
+  document.getElementById('qtext').textContent = q.text;
+
+  const codeEl = document.getElementById('qcode');
+  if (q.code) {
+    codeEl.textContent = q.code;
+    codeEl.style.display = 'block';
+    codeEl.className = q.type === 'bug' ? 'code' : 'code gc';
+  } else { codeEl.style.display = 'none'; }
+
+  const optsEl = document.getElementById('qopts');
+  const cmdEl = document.getElementById('qcmd');
+  const btnCheck = document.getElementById('btn-check');
+  const btnNext = document.getElementById('btn-next');
+  const fb = document.getElementById('fb');
+
+  optsEl.innerHTML = ''; cmdEl.style.display = 'none';
+  btnCheck.style.display = 'none'; btnNext.disabled = true;
+  fb.className = 'fb'; fb.textContent = '';
+
+  if (q.type === 'cmd') {
+    cmdEl.style.display = 'block';
+    btnCheck.style.display = 'inline-block';
+    btnCheck.disabled = false;
+    const inp = document.getElementById('cmdfld');
+    inp.value = ''; inp.disabled = false;
+    document.getElementById('qhint').innerHTML = q.hint ? `<b>ПОДСКАЗКА:</b> ${q.hint}` : '';
+    setTimeout(() => inp.focus(), 50);
+  } else {
+    const letters = ['A','B','C','D'];
+    (q.options || []).forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.innerHTML = `<span class="oletter">[${letters[i]}]</span><span>${opt}</span>`;
+      btn.onclick = () => selectOpt(i, btn);
+      optsEl.appendChild(btn);
+    });
+  }
+  updateTabs();
+}
+
+function recordAnswer(q, isCorrect, userAnswer) {
+  allAnsweredQuestions.push({q, isCorrect, userAnswer});
+  if (!isCorrect) wrongQuestions.push({q, userAnswer});
+}
+
+function selectOpt(idx, btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[qIdx];
+  document.querySelectorAll('.opt').forEach(o => o.disabled = true);
+  const fb = document.getElementById('fb');
+  const isCorrect = idx === q.answer;
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    fb.className = 'fb ok show';
+    fb.innerHTML = `✓ ВЕРНО\n\n${q.explain}`;
+    if (topicStats[q.topic]) topicStats[q.topic].correct++;
+    totalCorrect++;
+  } else {
+    btn.classList.add('wrong');
+    const allOpts = document.querySelectorAll('.opt');
+    if (allOpts[q.answer]) allOpts[q.answer].classList.add('correct');
+    fb.className = 'fb no show';
+    fb.innerHTML = `✗ НЕВЕРНО\n\n${q.explain}`;
+  }
+
+  recordAnswer(q, isCorrect, (q.options||[])[idx] || '');
+  document.getElementById('btn-next').disabled = false;
+  updateScores();
+}
+
+function checkCmd() {
+  if (answered) return;
+  answered = true;
+  const q = questions[qIdx];
+  const inp = document.getElementById('cmdfld');
+  const user = inp.value.trim().toLowerCase().replace(/\s+/g,' ');
+  const fb = document.getElementById('fb');
+  inp.disabled = true;
+  document.getElementById('btn-check').disabled = true;
+  const answers = Array.isArray(q.answer) ? q.answer : [q.answer];
+  const isCorrect = answers.some(a => {
+    const norm = a.toLowerCase().replace(/\s+/g,' ');
+    return user === norm || (user.length > 4 && norm.includes(user.split(' ').slice(0,3).join(' ')));
+  });
+
+  if (isCorrect) {
+    fb.className = 'fb ok show';
+    fb.innerHTML = `✓ ВЕРНО\n\n${q.explain}`;
+    if (topicStats[q.topic]) topicStats[q.topic].correct++;
+    totalCorrect++;
+  } else {
+    fb.className = 'fb no show';
+    fb.innerHTML = `✗ НЕВЕРНО\n\nПравильный ответ:\n${answers[0]}\n\n${q.explain}`;
+  }
+
+  recordAnswer(q, isCorrect, user);
+  document.getElementById('btn-next').disabled = false;
+  updateScores();
+}
+
+function nextQ() {
+  if (qIdx < questions.length - 1) { qIdx++; renderQ(); updateProgress(); }
+  else showResults();
+}
+
+function updateProgress() {
+  const pct = questions.length > 0 ? Math.round((qIdx / questions.length) * 100) : 0;
+  document.getElementById('pfill').style.width = pct + '%';
+  document.getElementById('pcount').textContent = `${qIdx} / ${questions.length}`;
+}
+
+function updateScores() {
+  const a = qIdx + 1;
+  document.getElementById('sc-ok').textContent = totalCorrect;
+  document.getElementById('sc-no').textContent = a - totalCorrect;
+  document.getElementById('sc-acc').textContent = a > 0 ? Math.round((totalCorrect/a)*100)+'%' : '—';
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function showResults() {
+  goScreen('s-results');
+  const total = questions.length;
+  const pct = total > 0 ? Math.round((totalCorrect / total) * 100) : 0;
+  const scoreEl = document.getElementById('res-pct');
+  scoreEl.textContent = pct + '%';
+  scoreEl.style.color = pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+
+  const grid = document.getElementById('res-grid');
+  grid.innerHTML = '';
+  blockRanges.forEach(b => {
+    const div = document.createElement('div');
+    div.className = 'rg-item';
+    div.innerHTML = `${b.name}<span class="rv">${b.end - b.start + 1} вопр.</span>`;
+    grid.appendChild(div);
+  });
+
+  const v = [[90,'SENIOR SRE — ГОТОВ К PRODUCTION'],[70,'MIDDLE — ЕЩЁ НЕМНОГО ПРАКТИКИ'],[50,'JUNIOR — ПРОДОЛЖАЙ УЧИТЬСЯ'],[0,'НОВИЧОК — ЧИТАЙ ДОКУМЕНТАЦИЮ']];
+  document.getElementById('res-verdict').textContent = '[ ' + v.find(([m]) => pct >= m)[1] + ' ]';
+
+  renderWeakTopics();
+  renderPrompt(pct);
+}
+
+function renderWeakTopics() {
+  const list = document.getElementById('weak-list');
+  list.innerHTML = '';
+  selectedTopics.forEach(t => {
+    const s = topicStats[t];
+    if (!s || s.total === 0) return;
+    const pct = Math.round((s.correct / s.total) * 100);
+    const fc = pct >= 70 ? 'good' : pct >= 40 ? 'warn' : 'bad';
+    const sc = pct >= 70 ? 'good' : '';
+    const div = document.createElement('div');
+    div.className = 'weak-item';
+    div.innerHTML = `<span class="wi-topic">${t}</span><div class="wi-bar"><div class="wi-fill ${fc}" style="width:${pct}%"></div></div><span class="wi-score ${sc}">${s.correct}/${s.total} (${pct}%)</span>`;
+    list.appendChild(div);
+  });
+}
+
+// ============================================================
+// PROMPT GENERATION
+// ============================================================
+function setPromptMode(mode) {
+  promptMode = mode;
+  document.getElementById('pt-errors').classList.toggle('active', mode === 'errors');
+  document.getElementById('pt-all').classList.toggle('active', mode === 'all');
+  const pct = questions.length > 0 ? Math.round((totalCorrect / questions.length) * 100) : 0;
+  renderPrompt(pct);
+}
+
+function formatQuestion(item, includeAnswer) {
+  const {q, isCorrect, userAnswer} = item;
+  const typeNames = {mc:'Выбор ответа', bug:'Найди ошибку', cmd:'Напиши команду'};
+  let text = `\n[${q.topic} · ${typeNames[q.type] || q.type}]\nВопрос: ${q.text}`;
+
+  if (q.code) text += `\nКод:\n${q.code}`;
+
+  if (q.type === 'cmd') {
+    text += `\nТвой ответ: ${userAnswer || '(не ответил)'}`;
+    if (includeAnswer) {
+      const ans = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+      text += `\nПравильно: ${ans}`;
+    }
+  } else if (q.options) {
+    text += `\nТвой ответ: ${userAnswer}`;
+    if (includeAnswer && !isCorrect) {
+      text += `\nПравильно: ${q.options[q.answer]}`;
+    }
+  }
+
+  if (includeAnswer) text += `\nПояснение: ${q.explain}`;
+  text += '\n';
+  return text;
+}
+
+function renderPrompt(totalPct) {
+  const weak = selectedTopics.filter(t => {
+    const s = topicStats[t];
+    return s && s.total > 0 && (s.correct/s.total) < 0.7;
+  });
+
+  const breakdown = selectedTopics.map(t => {
+    const s = topicStats[t];
+    if (!s || !s.total) return '';
+    return `  - ${t}: ${s.correct}/${s.total} (${Math.round((s.correct/s.total)*100)}%)`;
+  }).filter(Boolean).join('\n');
+
+  const sourceQuestions = promptMode === 'errors' ? wrongQuestions : allAnsweredQuestions;
+  const modeLabel = promptMode === 'errors' ? 'ВОПРОСЫ С ОШИБКАМИ' : 'ВСЕ ВОПРОСЫ';
+
+  let questionsBlock = '';
+  if (sourceQuestions.length > 0) {
+    questionsBlock = `\n${modeLabel}:\n${'─'.repeat(40)}`;
+    sourceQuestions.forEach(item => {
+      questionsBlock += formatQuestion(item, true);
+    });
+    questionsBlock += '─'.repeat(40);
+  }
+
+  const weakPart = weak.length > 0
+    ? `\nСЛАБЫЕ ТЕМЫ: ${weak.join(', ')}\n\nДля каждой слабой темы:\n1. Объясни ключевые концепции с примерами\n2. Дай 3-5 практических задания с решениями\n3. Что именно нужно уметь делать руками\n4. Лучшие ресурсы для изучения`
+    : `\nВсе темы освоены хорошо! Дай задания повышенной сложности по: ${selectedTopics.join(', ')}`;
+
+  document.getElementById('prompt-box').textContent =
+`Ты опытный DevOps/SRE ментор. Я прошёл практический тест и хочу проработать пробелы.
+
+МОИ РЕЗУЛЬТАТЫ:
+Общий результат: ${totalPct}%
+${breakdown}
+${questionsBlock}
+${weakPart}
+
+ФОРМАТ ОТВЕТА:
+- Краткий анализ (2-3 предложения)
+- По каждой слабой теме: объяснение → примеры → задания
+- Конкретный план на 2 недели
+- Реальные примеры команд и конфигов
+
+Уровень: практикующий инженер, не джун.`;
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('prompt-box').textContent).then(() => {
+    const s = document.getElementById('copy-ok');
+    s.classList.add('show');
+    setTimeout(() => s.classList.remove('show'), 2500);
+  });
+}
+
+// ============================================================
+// STOP TEST
+// ============================================================
+function stopTest() {
+  if (confirm('Остановить тест? Результаты будут потеряны.')) {
+    goScreen('s-topics');
+  }
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('s-password').classList.contains('active')) checkPassword();
+    if (document.getElementById('s-test').classList.contains('active') && !answered) {
+      if (document.getElementById('qcmd').style.display !== 'none') checkCmd();
+    }
+  }
+});
+</script>
+</body>
+</html>
