@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YAML WARRIOR — DevOps Тренажёр</title>
+<title>YAML WARRIOR — Support Тренажёр</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMGMwYzBjIiByeD0iNiIvPjxwb2x5Z29uIHBvaW50cz0iMTgsMyA4LDE4IDE1LDE4IDE0LDI5IDI0LDE0IDE3LDE0IiBmaWxsPSIjMDBmZjQxIiBzdHJva2U9IiMwMGNjMzMiIHN0cm9rZS13aWR0aD0iMC41Ii8+PC9zdmc+">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
@@ -196,8 +196,9 @@
 
   <div class="hdr">
     <div class="hdr-title">YAML WARRIOR<span class="cursor"></span></div>
-    <div class="hdr-sub">DevOps Тренажёр // <span>AI-powered · Linux · Docker · Kubernetes · Go</span> // v4.0</div>
-    <div class="hdr-sub" style="margin-top:3px;">by <span>Верещака Артем</span> · <span>@artgodev</span></div>
+    <div class="hdr-sub">Support Тренажёр // <span>AI-powered · Linux · Docker · Kubernetes · Go</span> // v4.0</div>
+    <div class="hdr-sub" style="margin-top:3px;">by <span>Верещака Артем</span> · <span>@arveresc</span></div>
+    <div style="margin-top:5px;font-size:10px;color:#ff3333;letter-spacing:1px;">⚠ Внимание — с мобильных устройств могут быть ошибки, открывайте с десктопов</div>
   </div>
 
   <!-- SCREEN 0: PASSWORD -->
@@ -459,7 +460,7 @@ async function checkPassword() {
   btn.textContent = 'ВОЙТИ →';
   btn.disabled = false;
 
-  if  (pw === '12345' || apiKey && apiKey.startsWith('sk-'))  {
+  if (pw === '12345' || apiKey && apiKey.startsWith('sk-')) {
     err.classList.remove('show');
     att.classList.remove('show');
     window._apiKey = apiKey; // сохраняем расшифрованный ключ в память
@@ -583,7 +584,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ============================================================
 // GENERATE QUESTIONS
 // ============================================================
-const SYSTEM_PROMPT = `Ты генератор вопросов для DevOps/SRE тренажёра. Генерируй СТРОГО валидный JSON без markdown, без комментариев. Отвечай только JSON.`;
+const SYSTEM_PROMPT = `Ты генератор вопросов для Support/SRE тренажёра. Генерируй СТРОГО валидный JSON без markdown, без комментариев. Отвечай только JSON.`;
 
 const DIFFICULTY_PROMPTS = {
   easy: 'Уровень сложности: ДЖУН. Базовые концепции, простые команды, стандартные ситуации. Подходит для изучения основ.',
@@ -616,7 +617,8 @@ async function generateTopic(topic, count) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + apiKey,
-      'anthropic-version': '2023-06-01'
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
@@ -1014,7 +1016,7 @@ function renderPrompt(totalPct) {
     : `\nВсе темы освоены хорошо! Дай задания повышенной сложности по: ${selectedTopics.join(', ')}`;
 
   document.getElementById('prompt-box').textContent =
-`Ты опытный DevOps/SRE ментор. Я прошёл практический тест и хочу проработать пробелы.
+`Ты опытный Support/SRE ментор. Я прошёл практический тест и хочу проработать пробелы.
 
 МОИ РЕЗУЛЬТАТЫ:
 Общий результат: ${totalPct}%
