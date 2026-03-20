@@ -276,11 +276,11 @@
     </div>
 
     <div class="qcount-section" style="margin-top:12px;">
-      <div class="qcount-label">$ СЛОЖНОСТЬ <span id="difficulty-display">// средний</span></div>
+      <div class="qcount-label">$ СЛОЖНОСТЬ <span id="difficulty-display">// Мидл</span></div>
       <div class="qcount-btns">
-        <button class="qcount-btn" id="diff-easy" onclick="setDifficulty('easy')">ДЖУН</button>
-        <button class="qcount-btn active" id="diff-medium" onclick="setDifficulty('medium')">СРЕДНИЙ</button>
-        <button class="qcount-btn" id="diff-hard" onclick="setDifficulty('hard')">СЕНЬОР</button>
+        <button class="qcount-btn" id="diff-easy" onclick="setDifficulty('easy')">Джун</button>
+        <button class="qcount-btn active" id="diff-medium" onclick="setDifficulty('medium')">Мидл</button>
+        <button class="qcount-btn" id="diff-hard" onclick="setDifficulty('hard')">Мастер</button>
       </div>
       <div class="qcount-hint" id="difficulty-hint">
         <span>Практикующий инженер</span> — реальные production сценарии
@@ -514,8 +514,8 @@ function setDifficulty(d) {
   document.getElementById('diff-' + d).classList.add('active');
   const labels = {
     easy: ['// джун', 'Базовые концепции — подходит для изучения'],
-    medium: ['// средний', 'Практикующий инженер — реальные production сценарии'],
-    hard: ['// сеньор', 'Сложные кейсы — edge cases, оптимизация, архитектура']
+    medium: ['// мидл', 'Практикующий инженер — реальные production сценарии'],
+    hard: ['// мастер', 'Сложные кейсы — edge cases, оптимизация, архитектура']
   };
   document.getElementById('difficulty-display').textContent = labels[d][0];
   document.getElementById('difficulty-hint').innerHTML = '<span>' + labels[d][1] + '</span>';
@@ -582,12 +582,12 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ============================================================
 // GENERATE QUESTIONS
 // ============================================================
-const SYSTEM_PROMPT = `Ты генератор вопросов для DevOps/SRE тренажёра. Генерируй СТРОГО валидный JSON без markdown, без комментариев. Отвечай только JSON.`;
+const SYSTEM_PROMPT = `Ты генератор вопросов для L3 Support тренажёра. Генерируй СТРОГО валидный JSON без markdown, без комментариев. Отвечай только JSON.`;
 
 const DIFFICULTY_PROMPTS = {
-  easy: 'Уровень сложности: ДЖУН. Базовые концепции, простые команды, стандартные ситуации. Подходит для изучения основ.',
-  medium: 'Уровень сложности: СРЕДНИЙ. Практикующий инженер. Реальные production сценарии, типичные ошибки в работе.',
-  hard: 'Уровень сложности: СЕНЬОР. Сложные edge cases, нестандартные ситуации, оптимизация производительности, архитектурные решения.'
+  easy: 'Уровень сложности: Джун. Базовые концепции, простые команды, стандартные ситуации. Подходит для изучения основ.',
+  medium: 'Уровень сложности: Мидл. Практикующий инженер. Реальные production сценарии, типичные ошибки в работе.',
+  hard: 'Уровень сложности: Мастер. Сложные edge cases, нестандартные ситуации, оптимизация производительности, архитектурные решения.'
 };
 
 function buildPrompt(topic, count) {
