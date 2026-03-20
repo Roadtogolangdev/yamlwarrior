@@ -275,6 +275,18 @@
       </div>
     </div>
 
+    <div class="qcount-section" style="margin-top:12px;">
+      <div class="qcount-label">$ СЛОЖНОСТЬ <span id="difficulty-display">// средний</span></div>
+      <div class="qcount-btns">
+        <button class="qcount-btn" id="diff-easy" onclick="setDifficulty('easy')">ДЖУН</button>
+        <button class="qcount-btn active" id="diff-medium" onclick="setDifficulty('medium')">СРЕДНИЙ</button>
+        <button class="qcount-btn" id="diff-hard" onclick="setDifficulty('hard')">СЕНЬОР</button>
+      </div>
+      <div class="qcount-hint" id="difficulty-hint">
+        <span>Практикующий инженер</span> — реальные production сценарии
+      </div>
+    </div>
+
     <div class="ts-err" id="ts-err">⚠ Выбери хотя бы одну тему</div>
     <div class="btnrow" style="justify-content:space-between">
       <button class="btn btn-s" onclick="goScreen('s-password')">← ГЛАВНАЯ</button>
@@ -284,6 +296,10 @@
 
   <!-- SCREEN 2: LOADING TERMINAL -->
   <div class="screen" id="s-loading">
+    <div style="border:1px solid var(--amber);padding:12px 16px;margin-bottom:14px;background:rgba(255,176,0,.05);font-size:11px;color:var(--amber);display:flex;align-items:center;gap:10px;" id="loading-warn">
+      <span style="animation:blink 1s step-end infinite;font-size:16px;">⏳</span>
+      <span>Генерация вопросов через AI займёт <b style="color:#fff;">10–20 секунд</b> на тему. Пожалуйста, не закрывай вкладку.</span>
+    </div>
     <div class="terminal">
       <div class="terminal-header">YAML WARRIOR // GENERATION ENGINE // v4.0</div>
       <div id="terminal-output"></div>
@@ -373,7 +389,10 @@
 
 </div>
 <script>
-
+// ============================================================
+// CONFIG — замени ENCODED_KEY_HERE на base64 от твоего ключа
+// Команда: echo -n "sk-твой-ключ" | base64
+// ============================================================
 const ENCODED_KEY = 'fByvKHV8FcdODJ5GRABXMSMfHv+fjG1YQm9yUfbBcy5BSL5H2YOfke0vf8GQ++xYC6nL1feqN/ObFQ3Z1oLm';
 // Пароль проверяется через расшифровку ключа — если ключ расшифровался = пароль верный
 
@@ -399,6 +418,7 @@ async function decodeKey(encryptedB64, password) {
 // ============================================================
 let selectedTopics = [];
 let questionsPerTopic = 10;
+let difficulty = 'medium';
 let questions = [];
 let qIdx = 0;
 let answered = false;
@@ -484,8 +504,21 @@ function setQCount(n) {
 
 function updateCostHint() {
   const total = selectedTopics.length * questionsPerTopic;
-  const cost = (total * 0.0002).toFixed(3);
-  document.getElementById('cost-hint').textContent = cost;
+  const cost = (total * 0.5 / 1000).toFixed(2);
+  document.getElementById('cost-hint').textContent = cost + ' ₽';
+}
+
+function setDifficulty(d) {
+  difficulty = d;
+  document.querySelectorAll('[id^="diff-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('diff-' + d).classList.add('active');
+  const labels = {
+    easy: ['// джун', 'Базовые концепции — подходит для изучения'],
+    medium: ['// средний', 'Практикующий инженер — реальные production сценарии'],
+    hard: ['// сеньор', 'Сложные кейсы — edge cases, оптимизация, архитектура']
+  };
+  document.getElementById('difficulty-display').textContent = labels[d][0];
+  document.getElementById('difficulty-hint').innerHTML = '<span>' + labels[d][1] + '</span>';
 }
 
 // ============================================================
@@ -549,69 +582,48 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ============================================================
 // GENERATE QUESTIONS
 // ============================================================
-const SYSTEM_PROMPT = `Ты генератор вопросов для DevOps/SRE тренажёра.
-Генерируй СТРОГО валидный JSON без markdown, без комментариев.
-Вопросы должны быть практическими для опытного инженера.`;
+const SYSTEM_PROMPT = `Ты генератор вопросов для DevOps/SRE тренажёра. Генерируй СТРОГО валидный JSON без markdown, без комментариев. Отвечай только JSON.`;
+
+const DIFFICULTY_PROMPTS = {
+  easy: 'Уровень сложности: ДЖУН. Базовые концепции, простые команды, стандартные ситуации. Подходит для изучения основ.',
+  medium: 'Уровень сложности: СРЕДНИЙ. Практикующий инженер. Реальные production сценарии, типичные ошибки в работе.',
+  hard: 'Уровень сложности: СЕНЬОР. Сложные edge cases, нестандартные ситуации, оптимизация производительности, архитектурные решения.'
+};
 
 function buildPrompt(topic, count) {
   const mc = Math.ceil(count * 0.4);
   const bug = Math.ceil(count * 0.35);
   const cmd = count - mc - bug;
-  return `Сгенерируй ${count} вопросов по теме "${topic}" для DevOps/SRE инженера.
-Распределение: ${mc} типа mc (выбор ответа), ${bug} типа bug (найди ошибку в коде), ${cmd} типа cmd (напиши команду).
+  return `Сгенерируй ${count} вопросов по теме "${topic}".
+${DIFFICULTY_PROMPTS[difficulty]}
+Распределение: ${mc} типа mc, ${bug} типа bug, ${cmd} типа cmd.
 
-Верни JSON (без markdown):
-{
-  "questions": [
-    {
-      "type": "mc",
-      "topic": "${topic}",
-      "text": "текст вопроса",
-      "options": ["A", "B", "C", "D"],
-      "answer": 0,
-      "explain": "объяснение"
-    },
-    {
-      "type": "bug",
-      "topic": "${topic}",
-      "text": "описание — найди ошибку",
-      "code": "код с ошибкой",
-      "options": ["A", "B", "C", "D"],
-      "answer": 1,
-      "explain": "объяснение ошибки и исправление"
-    },
-    {
-      "type": "cmd",
-      "topic": "${topic}",
-      "text": "описание задачи",
-      "hint": "подсказка",
-      "answer": ["команда1", "команда2"],
-      "explain": "объяснение команды"
-    }
-  ]
-}
+Верни ТОЛЬКО JSON без markdown:
+{"questions":[{"type":"mc","topic":"${topic}","text":"вопрос","options":["полный текст варианта 1","полный текст варианта 2","полный текст варианта 3","полный текст варианта 4"],"answer":0,"explain":"объяснение"},{"type":"bug","topic":"${topic}","text":"найди ошибку","code":"код","options":["полный текст варианта 1","полный текст варианта 2","полный текст варианта 3","полный текст варианта 4"],"answer":1,"explain":"объяснение"},{"type":"cmd","topic":"${topic}","text":"задача","hint":"подсказка","answer":["команда"],"explain":"объяснение"}]}
 
 Требования:
-- Уровень: практикующий инженер, не джун
-- Код в bug должен содержать реальную типичную ошибку
-- Объяснения конкретные с примерами исправления
-- На русском языке`;
+- В поле options пиши ТОЛЬКО текст варианта, БЕЗ букв A/B/C/D в начале
+- Ровно 4 варианта в каждом mc и bug вопросе
+- Код в bug должен содержать реальную ошибку
+- Объяснения конкретные, на русском языке.`;
 }
 
 async function generateTopic(topic, count) {
   const apiKey = window._apiKey;
-  const response = await fetch('https://api.proxyapi.ru/anthropic/v1/messages', {
+  const response = await fetch('https://api.proxyapi.ru/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey,
-      'anthropic-version': '2023-06-01'
+      'Authorization': 'Bearer ' + apiKey
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildPrompt(topic, count) }]
+      model: 'gpt-5.4-nano',
+      max_completion_tokens: 4000,
+      temperature: 0.7,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: buildPrompt(topic, count) }
+      ]
     })
   });
 
@@ -621,10 +633,9 @@ async function generateTopic(topic, count) {
   }
 
   const data = await response.json();
-  const text = data.content[0].text.trim();
+  const text = data.choices[0].message.content.trim();
   const clean = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
 
-  // Find JSON object in response
   const start = clean.indexOf('{');
   const end = clean.lastIndexOf('}');
   const jsonStr = clean.substring(start, end + 1);
@@ -649,7 +660,7 @@ async function startTest() {
 
   termLog('> Инициализация YAML WARRIOR v4.0...', 'dim');
   await sleep(300);
-  termLog('> Подключение к Claude API...', '');
+  termLog('> Подключение к AI API...', '');
   await sleep(400);
   termLog('> Соединение установлено ✓', 'ok');
   await sleep(200);
@@ -804,7 +815,8 @@ function renderQ() {
     setTimeout(() => inp.focus(), 50);
   } else {
     const letters = ['A','B','C','D'];
-    (q.options || []).forEach((opt, i) => {
+    const opts = (q.options || []).filter(o => o && o.trim()).slice(0, 4);
+    opts.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'opt';
       btn.innerHTML = `<span class="oletter">[${letters[i]}]</span><span>${opt}</span>`;
